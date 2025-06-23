@@ -1,0 +1,514 @@
+/* CID Display Component Styles */
+
+.cid-display-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.cid-display-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cid-display-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 24px;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cid-display-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.cid-display-content {
+  padding: 24px;
+}
+
+/* File Information Section */
+.file-info-section {
+  margin-bottom: 32px;
+}
+
+.file-info-section h3 {
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.info-item {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.info-label {
+  display: block;
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.info-value {
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.tag-badge {
+  background: #667eea;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* CID Section */
+.cid-section {
+  margin-bottom: 32px;
+}
+
+.cid-section h3 {
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.primary-cid {
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.cid-value {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  word-break: break-all;
+}
+
+.cid-value code {
+  flex: 1;
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  color: #1a1a1a;
+  border: 1px solid #e2e8f0;
+}
+
+.copy-button, .format-copy-btn {
+  background: #667eea;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.copy-button:hover, .format-copy-btn:hover {
+  background: #5a67d8;
+  transform: translateY(-1px);
+}
+
+/* CID Formats */
+.cid-formats {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.cid-formats h4 {
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  font-size: 16px;
+}
+
+.format-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.format-item {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.format-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 12px;
+}
+
+.format-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.format-value code {
+  flex: 1;
+  background: white;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  word-break: break-all;
+  border: 1px solid #e2e8f0;
+}
+
+.format-copy-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* Gateway Section */
+.gateway-section {
+  margin-bottom: 32px;
+}
+
+.gateway-section h3 {
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.gateway-links {
+  display: grid;
+  gap: 16px;
+}
+
+.gateway-item {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.gateway-label {
+  display: block;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.gateway-url {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gateway-url a {
+  flex: 1;
+  color: #10b981;
+  text-decoration: none;
+  word-break: break-all;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+}
+
+.gateway-url a:hover {
+  text-decoration: underline;
+}
+
+/* QR Code Section */
+.qr-section {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.qr-section h3 {
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.qr-container {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  display: inline-block;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.qr-code {
+  display: block;
+  margin: 0 auto 12px auto;
+  border-radius: 8px;
+}
+
+.qr-description {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Actions Section */
+.actions-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.action-button.primary {
+  background: #667eea;
+  color: white;
+}
+
+.action-button.primary:hover {
+  background: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.action-button.secondary {
+  background: #10b981;
+  color: white;
+}
+
+.action-button.secondary:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.action-button:not(.primary):not(.secondary) {
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #e2e8f0;
+}
+
+.action-button:not(.primary):not(.secondary):hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+/* Technical Details */
+.technical-details {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+}
+
+.technical-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.technical-details summary:hover {
+  color: #1a1a1a;
+}
+
+.tech-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.tech-info p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.tech-info strong {
+  color: #1a1a1a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cid-display-overlay {
+    padding: 10px;
+  }
+  
+  .cid-display-modal {
+    max-height: 95vh;
+  }
+  
+  .cid-display-header {
+    padding: 16px;
+  }
+  
+  .cid-display-header h2 {
+    font-size: 20px;
+  }
+  
+  .cid-display-content {
+    padding: 16px;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .format-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .format-value {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .gateway-url {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .actions-section {
+    flex-direction: column;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .cid-display-modal {
+    background: #1a1a1a;
+    color: white;
+  }
+  
+  .file-info-section h3,
+  .cid-section h3,
+  .gateway-section h3,
+  .qr-section h3 {
+    color: white;
+  }
+  
+  .info-item {
+    background: #2d3748;
+    color: white;
+  }
+  
+  .info-label {
+    color: #a0aec0;
+  }
+  
+  .info-value {
+    color: white;
+  }
+  
+  .primary-cid {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+  
+  .cid-value code,
+  .format-value code {
+    background: #1a1a1a;
+    color: white;
+    border-color: #4a5568;
+  }
+  
+  .cid-formats {
+    background: #2d3748;
+  }
+  
+  .gateway-item {
+    background: #2d3748;
+    color: white;
+  }
+  
+  .gateway-label {
+    color: #a0aec0;
+  }
+  
+  .qr-container {
+    background: #2d3748;
+  }
+  
+  .tech-info {
+    background: #2d3748;
+    color: white;
+  }
+  
+  .technical-details summary {
+    color: #a0aec0;
+  }
+  
+  .technical-details summary:hover {
+    color: white;
+  }
+} 

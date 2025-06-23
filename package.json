@@ -1,0 +1,39 @@
+{
+  "name": "proofvault",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.3.0",
+    "ethers": "^5.7.2",
+    "multiformats": "^13.3.7",
+    "pinata": "^2.4.8",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-dropzone": "^14.3.8",
+    "react-qr-code": "^2.0.16",
+    "web3.storage": "^4.5.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "dotenv": "^16.5.0",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "hardhat": "^2.24.3",
+    "vite": "^6.3.5"
+  }
+}
