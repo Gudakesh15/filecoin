@@ -8,8 +8,6 @@ import WalletConnection from './components/WalletConnection'
 function App() {
   const [activeTab, setActiveTab] = useState('upload')
   const [uploadedFiles, setUploadedFiles] = useState([])
-  const [walletConnection, setWalletConnection] = useState(null)
-
   const handleUploadSuccess = (uploadData) => {
     setUploadedFiles(prev => [...prev, uploadData])
   }
@@ -17,11 +15,6 @@ function App() {
   const handleUploadError = (error) => {
     console.error('Upload error in App:', error)
     // Could add a toast notification here
-  }
-
-  const handleWalletConnectionChange = (connectionInfo) => {
-    setWalletConnection(connectionInfo)
-    console.log('Wallet connection changed:', connectionInfo)
   }
 
   const formatFileSize = (bytes) => {
@@ -68,7 +61,7 @@ function App() {
         <main className="app-main">
           {/* Wallet Connection Section */}
           <div className="wallet-section">
-            <WalletConnection onConnectionChange={handleWalletConnectionChange} />
+            <WalletConnection />
           </div>
 
           {activeTab === 'upload' && (
@@ -78,7 +71,6 @@ function App() {
                 <FileUpload 
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
-                  walletConnection={walletConnection}
                 />
               </div>
               
@@ -139,7 +131,7 @@ function App() {
 
           {activeTab === 'verify' && (
             <div className="verification-section">
-              <VerificationInterface walletConnection={walletConnection} />
+              <VerificationInterface />
             </div>
           )}
         </main>

@@ -1,16 +1,20 @@
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
+import { useAccount } from 'wagmi'
 import { CID } from 'multiformats/cid'
 import blockchainService from '../utils/blockchainService'
 import './VerificationInterface.css'
 
-const VerificationInterface = ({ walletConnection }) => {
+const VerificationInterface = () => {
   const [verificationMethod, setVerificationMethod] = useState('cid') // 'cid' or 'file'
   const [cidInput, setCidInput] = useState('')
   const [fileToVerify, setFileToVerify] = useState(null)
   const [verificationResult, setVerificationResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Use Wagmi for wallet connection
+  const { isConnected } = useAccount()
 
   // Clear previous results and errors
   const clearState = () => {
@@ -47,7 +51,7 @@ const VerificationInterface = ({ walletConnection }) => {
 
   // Check if document is verified on-chain
   const checkOnChainVerification = async (cidString) => {
-    if (!walletConnection?.isConnected) {
+    if (!isConnected) {
       return { 
         isVerified: false, 
         exists: false,

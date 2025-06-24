@@ -3,7 +3,7 @@ import { useAccount, useConnect, useDisconnect, useBalance } from 'wagmi'
 import { initWeb3Modal } from '../config/web3'
 import './WalletConnection.css'
 
-const WalletConnection = ({ onConnectionChange }) => {
+const WalletConnection = () => {
   const [mounted, setMounted] = useState(false)
   const [error, setError] = useState('')
   const [showDetails, setShowDetails] = useState(false)
@@ -21,17 +21,7 @@ const WalletConnection = ({ onConnectionChange }) => {
     setMounted(true)
   }, [])
 
-  // Update parent component when connection changes
-  useEffect(() => {
-    if (mounted && onConnectionChange) {
-      onConnectionChange({
-        isConnected,
-        account: address || null,
-        balance: balance ? parseFloat(balance.formatted) : null,
-        chainId,
-      })
-    }
-  }, [isConnected, address, balance, chainId, mounted, onConnectionChange])
+  // No longer need to update parent component - FileUpload uses Wagmi directly
 
   // Don't render until mounted to avoid hydration issues
   if (!mounted) {

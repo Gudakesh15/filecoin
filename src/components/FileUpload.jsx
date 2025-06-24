@@ -1,15 +1,13 @@
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { useAccount, useWalletClient } from 'wagmi'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { ethers } from 'ethers'
 import CIDDisplay from './CIDDisplay'
-import BlockchainService from '../utils/blockchainService'
-import { RetryManager } from '../utils/retryUtils'
 import { CONTRACT_ADDRESSES, PROOF_VAULT_ABI } from '../config/web3'
 import './FileUpload.css'
 import './CIDDisplay.css'
 
-const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
+const FileUpload = ({ onUploadSuccess, onUploadError }) => {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState('')
@@ -19,7 +17,10 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
   
   // Wagmi hooks for direct blockchain interaction
   const { address, isConnected } = useAccount()
-  const { data: walletClient } = useWalletClient()
+  const { writeContract, data: transactionHashData, isPending: isWritePending, error: writeError } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: transactionHashData,
+  })
   
   // Blockchain integration state
   const [blockchainStep, setBlockchainStep] = useState('')
@@ -33,9 +34,6 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
   // Pinata configuration
   const PINATA_JWT = import.meta.env.VITE_PINATA_JWT
   const PINATA_GATEWAY = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
-
-  // Get blockchain service instance
-  const blockchainService = BlockchainService
 
   const uploadToPinata = async (file) => {
     if (!PINATA_JWT) {
@@ -103,109 +101,152 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
   }
 
   const registerOnBlockchain = async (cid, tag) => {
-    // Add timeout to prevent hanging (reduced to 15 seconds for testing)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Blockchain registration timed out after 15 seconds')), 15000)
-    })
-    
-    const registrationPromise = async () => {
+    return new Promise((resolve, reject) => {
       try {
         setBlockchainStep('Preparing blockchain registration...')
+        setProgress(20)
         
         // Check wallet connection using Wagmi
-        if (!isConnected || !address || !walletClient) {
+        if (!isConnected || !address) {
           throw new Error('Wallet not connected. Please connect your wallet to register on blockchain.')
         }
 
-      setBlockchainStep('Setting up blockchain connection...')
-      setProgress(20)
-      
-      console.log('🔧 Setting up provider and signer...')
-      // Create ethers provider from walletClient
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const signer = provider.getSigner()
-      
-      setBlockchainStep('Verifying wallet connection...')
-      setProgress(30)
-      console.log('📋 Getting signer address...')
-      const signerAddress = await signer.getAddress()
-      console.log('📋 Signer address:', signerAddress)
-      
-      console.log('🌐 Getting network info...')
-      const network = await provider.getNetwork()
-      console.log('🌐 Network:', network)
-      
-      setBlockchainStep('Preparing smart contract...')
-      setProgress(40)
-      // Create contract instance
-      console.log('📄 Creating contract instance with address:', CONTRACT_ADDRESSES.PROOF_VAULT)
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESSES.PROOF_VAULT,
-        PROOF_VAULT_ABI,
-        signer
-      )
-      
-      console.log('✅ Contract instance created successfully')
-
-      setBlockchainStep('Sending transaction to blockchain...')
-      setProgress(50)
-      
-      console.log('🚀 About to send transaction with CID:', cid, 'and tag:', tag)
-      console.log('🚀 Contract method to call: registerDocument')
-      
-      // Send transaction with automatic gas estimation (let MetaMask handle it)
-      console.log('⏳ Calling contract.registerDocument...')
-      const tx = await contract.registerDocument(cid, tag)
-      console.log('✅ Transaction sent! Hash:', tx.hash)
-      
-      setTransactionHash(tx.hash)
-      setTransactionStatus('submitted')
-      setBlockchainStep(`Transaction submitted: ${tx.hash.slice(0, 10)}...`)
-      setProgress(70)
-      
-      setBlockchainStep('Waiting for blockchain confirmation...')
-      setProgress(80)
-      
-      // Wait for confirmation
-      const receipt = await tx.wait(targetConfirmations)
-      
-      setConfirmations(targetConfirmations)
-      setTransactionStatus('confirmed')
-      setBlockchainStep('✅ Document registered on Filecoin blockchain!')
-      setProgress(100)
-
-      return {
-        transactionHash: tx.hash,
-        receipt,
-        confirmed: true,
-        gasUsed: receipt.gasUsed?.toString(),
-        blockNumber: receipt.blockNumber
-      }
-
-      } catch (error) {
-        console.error('Blockchain registration failed:', error)
-        setTransactionStatus('failed')
-        setError(error.message)
+        console.log('🚀 WAGMI APPROACH: Using writeContract hook directly...')
+        console.log('📋 Contract address:', CONTRACT_ADDRESSES.PROOF_VAULT)
+        console.log('📋 Using address from Wagmi:', address)
+        console.log('📋 CID:', cid, 'Tag:', tag)
         
-        // Check if error is retryable
-        const isRetryable = error.code !== 4001 && // User rejected transaction
-                           error.code !== -32603 && // Internal error (usually permanent)
-                           !error.message.includes('insufficient funds')
+        setBlockchainStep('Initiating contract call via Wagmi...')
+        setProgress(40)
         
-        if (isRetryable) {
-          setBlockchainStep(`❌ Registration failed (retryable): ${error.message}`)
-          error.isRetryable = true
-        } else {
-          setBlockchainStep(`❌ Registration failed: ${error.message}`)
-          error.isRetryable = false
+        // Use Wagmi's writeContract - this should bypass MetaMask extension issues
+        writeContract({
+          address: CONTRACT_ADDRESSES.PROOF_VAULT,
+          abi: PROOF_VAULT_ABI,
+          functionName: 'registerDocument',
+          args: [cid, tag],
+        })
+        
+        // Set up monitoring for transaction completion
+        let checkCount = 0
+        const maxChecks = 240 // 2 minutes at 500ms intervals
+        let hasFoundTransaction = false
+        
+        const checkTransaction = () => {
+          checkCount++
+          
+          // Get current values (not closured values)
+          const currentWriteError = writeError
+          const currentTransactionHash = transactionHashData
+          const currentIsConfirmed = isConfirmed
+          const currentIsConfirming = isConfirming
+          const currentIsWritePending = isWritePending
+          
+          console.log('🔍 Checking transaction status:', {
+            checkCount,
+            currentWriteError: !!currentWriteError,
+            currentTransactionHash: !!currentTransactionHash,
+            currentIsConfirmed,
+            currentIsConfirming,
+            currentIsWritePending
+          })
+          
+          if (currentWriteError) {
+            console.error('❌ Wagmi writeContract error:', currentWriteError)
+            setTransactionStatus('failed')
+            setError(currentWriteError.message)
+            
+            // Check if error is retryable
+            const isRetryable = !currentWriteError.message.includes('User rejected') && 
+                               !currentWriteError.message.includes('insufficient funds')
+            
+            const error = new Error(currentWriteError.message)
+            error.isRetryable = isRetryable
+            
+            if (isRetryable) {
+              setBlockchainStep(`❌ Registration failed (retryable): ${currentWriteError.message}`)
+            } else {
+              setBlockchainStep(`❌ Registration failed: ${currentWriteError.message}`)
+            }
+            
+            reject(error)
+            return
+          }
+          
+          if (currentTransactionHash && !hasFoundTransaction) {
+            console.log('🎉 Wagmi transaction submitted! Hash:', currentTransactionHash)
+            setTransactionHash(currentTransactionHash)
+            setTransactionStatus('submitted')
+            setBlockchainStep(`✅ Transaction submitted: ${currentTransactionHash.slice(0, 10)}...`)
+            setProgress(70)
+            hasFoundTransaction = true
+          }
+          
+          if (hasFoundTransaction) {
+            if (currentIsConfirmed) {
+              console.log('🎉 Transaction confirmed!')
+              setConfirmations(1)
+              setTransactionStatus('confirmed')
+              setBlockchainStep('✅ Document registered on Filecoin blockchain!')
+              setProgress(100)
+
+              resolve({
+                transactionHash: currentTransactionHash,
+                confirmed: true,
+                blockNumber: 'pending' // Wagmi doesn't expose block number directly
+              })
+              return // Important: exit the checking loop
+            } else if (currentIsConfirming) {
+              console.log('⏳ Transaction is being confirmed...')
+              setBlockchainStep('⏳ Waiting for blockchain confirmation... (this can take 1-2 minutes)')
+              setProgress(80)
+              // Continue checking more frequently for confirmation
+              setTimeout(checkTransaction, 2000) // Check every 2 seconds during confirmation
+              return
+            } else {
+              // Still pending confirmation
+              console.log('📡 Transaction submitted, waiting for confirmation...')
+              setBlockchainStep('📡 Transaction submitted, waiting for network confirmation...')
+              setProgress(75)
+              setTimeout(checkTransaction, 2000) // Check every 2 seconds
+              return
+            }
+          } else if (currentIsWritePending) {
+            setBlockchainStep('🔐 Waiting for wallet confirmation... (Check MetaMask)')
+            setProgress(60)
+            setTimeout(checkTransaction, 1000)
+            return
+          } else {
+            // Still waiting for writeContract to initiate
+            if (checkCount > maxChecks) {
+              reject(new Error('Transaction initiation timed out'))
+              return
+            }
+            
+            // Update progress during initiation (40-60%)
+            const initiationProgress = Math.min(60, 40 + (checkCount * 2))
+            setProgress(initiationProgress)
+            setBlockchainStep(`⚡ Initiating blockchain transaction... (${checkCount}/${maxChecks})`)
+            setTimeout(checkTransaction, 500)
+            return
+          }
         }
         
-        throw error
+        // Start checking
+        setTimeout(checkTransaction, 500)
+        
+        // Add timeout - Filecoin can be slow, so give it more time
+        setTimeout(() => {
+          reject(new Error('Blockchain registration timed out after 2 minutes'))
+        }, 120000) // 2 minutes
+        
+      } catch (error) {
+        console.error('Blockchain registration setup failed:', error)
+        setTransactionStatus('failed')
+        setError(error.message)
+        reject(error)
       }
-    }
-    
-    // Race between registration and timeout
-    return Promise.race([registrationPromise(), timeoutPromise])
+    })
   }
 
   const handleRetryBlockchain = async () => {
@@ -218,7 +259,7 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
       setBlockchainStep('Retrying blockchain registration...')
       
       // Re-check wallet connection before retry using Wagmi
-      if (!isConnected || !address || !walletClient) {
+      if (!isConnected || !address) {
         setError('Wallet not connected. Please connect your wallet first.')
         return
       }
@@ -295,9 +336,8 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
             console.log('🔍 Checking wallet connection for blockchain registration...')
       console.log('🔍 isConnected:', isConnected)
       console.log('🔍 address:', address)
-      console.log('🔍 walletClient:', walletClient)
       
-      if (isConnected && address && walletClient) {
+      if (isConnected && address) {
         console.log('✅ Wallet checks passed, starting blockchain registration...')
         try {
           setProgress(10) // Start blockchain progress
@@ -335,8 +375,7 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
         console.log('❌ Wallet connection check failed, skipping blockchain registration')
         console.log('❌ Missing:', {
           isConnected: !isConnected,
-          address: !address,
-          walletClient: !walletClient
+          address: !address
         })
         setCurrentStep('⚠️ Wallet not connected - skipping blockchain registration')
         setProgress(75)
@@ -383,7 +422,7 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
         }
       }, 3000)
     }
-  }, [tag, onUploadSuccess, onUploadError, PINATA_JWT, walletConnection])
+  }, [tag, onUploadSuccess, onUploadError, PINATA_JWT, isConnected, address, writeContract])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -520,7 +559,7 @@ const FileUpload = ({ onUploadSuccess, onUploadError, walletConnection }) => {
                 <p><strong>Step 2:</strong> Document registered on Filecoin (requires wallet)</p>
                 <p className="file-info">Maximum file size: 100MB</p>
                 
-                {!walletConnection?.isConnected && (
+                {!isConnected && (
                   <div className="wallet-warning">
                     ⚠️ Connect wallet for Step 2 (blockchain registration)
                     <br />
