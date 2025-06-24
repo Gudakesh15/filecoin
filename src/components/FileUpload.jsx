@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { ethers } from 'ethers'
@@ -30,6 +30,58 @@ const FileUpload = ({ onUploadSuccess, onUploadError }) => {
   const [targetConfirmations] = useState(1)
   const [error, setError] = useState('')
   const [retryAttempt, setRetryAttempt] = useState(0)
+  const [blockchainPromiseResolve, setBlockchainPromiseResolve] = useState(null)
+  const [blockchainPromiseReject, setBlockchainPromiseReject] = useState(null)
+
+  // 🔄 REACTIVE CONFIRMATION MONITOR - This fixes the "ping back" issue!
+  useEffect(() => {
+    if (!transactionHashData) return
+
+    console.log('🔄 Transaction hash detected:', transactionHashData)
+    setTransactionHash(transactionHashData)
+    setTransactionStatus('submitted')
+    setBlockchainStep(`✅ Transaction submitted: ${transactionHashData.slice(0, 10)}...`)
+    setProgress(70)
+
+    if (isConfirming) {
+      console.log('⏳ Transaction confirming...')
+      setBlockchainStep('⏳ Waiting for blockchain confirmation... (this can take 1-2 minutes)')
+      setProgress(80)
+    }
+
+    if (isConfirmed) {
+      console.log('🎉 PING BACK! Transaction confirmed!')
+      setConfirmations(1)
+      setTransactionStatus('confirmed')
+      setBlockchainStep('🎉 Congratulations! Your contract has been registered on Filecoin!')
+      setProgress(100)
+
+      // Trigger the promise resolution if we have a resolver
+      if (blockchainPromiseResolve) {
+        blockchainPromiseResolve({
+          transactionHash: transactionHashData,
+          confirmed: true,
+          blockNumber: 'confirmed'
+        })
+        setBlockchainPromiseResolve(null) // Clear the resolver
+      }
+    }
+
+    if (writeError) {
+      console.error('❌ Transaction error:', writeError)
+      setTransactionStatus('failed')
+      setError(writeError.message)
+      setBlockchainStep(`❌ Registration failed: ${writeError.message}`)
+      
+      if (blockchainPromiseReject) {
+        const error = new Error(writeError.message)
+        error.isRetryable = !writeError.message.includes('User rejected') && 
+                           !writeError.message.includes('insufficient funds')
+        blockchainPromiseReject(error)
+        setBlockchainPromiseReject(null) // Clear the rejector
+      }
+    }
+  }, [transactionHashData, isConfirming, isConfirmed, writeError, blockchainPromiseResolve, blockchainPromiseReject])
 
   // Pinata configuration
   const PINATA_JWT = import.meta.env.VITE_PINATA_JWT
@@ -111,15 +163,19 @@ const FileUpload = ({ onUploadSuccess, onUploadError }) => {
           throw new Error('Wallet not connected. Please connect your wallet to register on blockchain.')
         }
 
-        console.log('🚀 WAGMI APPROACH: Using writeContract hook directly...')
+        console.log('🚀 NEW REACTIVE APPROACH: Using writeContract with useEffect monitoring...')
         console.log('📋 Contract address:', CONTRACT_ADDRESSES.PROOF_VAULT)
         console.log('📋 Using address from Wagmi:', address)
         console.log('📋 CID:', cid, 'Tag:', tag)
         
-        setBlockchainStep('Initiating contract call via Wagmi...')
+        // Store the promise resolvers for the useEffect to use
+        setBlockchainPromiseResolve(() => resolve)
+        setBlockchainPromiseReject(() => reject)
+        
+        setBlockchainStep('🔐 Waiting for wallet confirmation... (Check MetaMask)')
         setProgress(40)
         
-        // Use Wagmi's writeContract - this should bypass MetaMask extension issues
+        // Use Wagmi's writeContract - the useEffect will handle the rest!
         writeContract({
           address: CONTRACT_ADDRESSES.PROOF_VAULT,
           abi: PROOF_VAULT_ABI,
@@ -127,117 +183,13 @@ const FileUpload = ({ onUploadSuccess, onUploadError }) => {
           args: [cid, tag],
         })
         
-        // Set up monitoring for transaction completion
-        let checkCount = 0
-        const maxChecks = 240 // 2 minutes at 500ms intervals
-        let hasFoundTransaction = false
-        
-        const checkTransaction = () => {
-          checkCount++
-          
-          // Get current values (not closured values)
-          const currentWriteError = writeError
-          const currentTransactionHash = transactionHashData
-          const currentIsConfirmed = isConfirmed
-          const currentIsConfirming = isConfirming
-          const currentIsWritePending = isWritePending
-          
-          console.log('🔍 Checking transaction status:', {
-            checkCount,
-            currentWriteError: !!currentWriteError,
-            currentTransactionHash: !!currentTransactionHash,
-            currentIsConfirmed,
-            currentIsConfirming,
-            currentIsWritePending
-          })
-          
-          if (currentWriteError) {
-            console.error('❌ Wagmi writeContract error:', currentWriteError)
-            setTransactionStatus('failed')
-            setError(currentWriteError.message)
-            
-            // Check if error is retryable
-            const isRetryable = !currentWriteError.message.includes('User rejected') && 
-                               !currentWriteError.message.includes('insufficient funds')
-            
-            const error = new Error(currentWriteError.message)
-            error.isRetryable = isRetryable
-            
-            if (isRetryable) {
-              setBlockchainStep(`❌ Registration failed (retryable): ${currentWriteError.message}`)
-            } else {
-              setBlockchainStep(`❌ Registration failed: ${currentWriteError.message}`)
-            }
-            
-            reject(error)
-            return
-          }
-          
-          if (currentTransactionHash && !hasFoundTransaction) {
-            console.log('🎉 Wagmi transaction submitted! Hash:', currentTransactionHash)
-            setTransactionHash(currentTransactionHash)
-            setTransactionStatus('submitted')
-            setBlockchainStep(`✅ Transaction submitted: ${currentTransactionHash.slice(0, 10)}...`)
-            setProgress(70)
-            hasFoundTransaction = true
-          }
-          
-          if (hasFoundTransaction) {
-            if (currentIsConfirmed) {
-              console.log('🎉 Transaction confirmed!')
-              setConfirmations(1)
-              setTransactionStatus('confirmed')
-              setBlockchainStep('✅ Document registered on Filecoin blockchain!')
-              setProgress(100)
-
-              resolve({
-                transactionHash: currentTransactionHash,
-                confirmed: true,
-                blockNumber: 'pending' // Wagmi doesn't expose block number directly
-              })
-              return // Important: exit the checking loop
-            } else if (currentIsConfirming) {
-              console.log('⏳ Transaction is being confirmed...')
-              setBlockchainStep('⏳ Waiting for blockchain confirmation... (this can take 1-2 minutes)')
-              setProgress(80)
-              // Continue checking more frequently for confirmation
-              setTimeout(checkTransaction, 2000) // Check every 2 seconds during confirmation
-              return
-            } else {
-              // Still pending confirmation
-              console.log('📡 Transaction submitted, waiting for confirmation...')
-              setBlockchainStep('📡 Transaction submitted, waiting for network confirmation...')
-              setProgress(75)
-              setTimeout(checkTransaction, 2000) // Check every 2 seconds
-              return
-            }
-          } else if (currentIsWritePending) {
-            setBlockchainStep('🔐 Waiting for wallet confirmation... (Check MetaMask)')
-            setProgress(60)
-            setTimeout(checkTransaction, 1000)
-            return
-          } else {
-            // Still waiting for writeContract to initiate
-            if (checkCount > maxChecks) {
-              reject(new Error('Transaction initiation timed out'))
-              return
-            }
-            
-            // Update progress during initiation (40-60%)
-            const initiationProgress = Math.min(60, 40 + (checkCount * 2))
-            setProgress(initiationProgress)
-            setBlockchainStep(`⚡ Initiating blockchain transaction... (${checkCount}/${maxChecks})`)
-            setTimeout(checkTransaction, 500)
-            return
-          }
-        }
-        
-        // Start checking
-        setTimeout(checkTransaction, 500)
-        
-        // Add timeout - Filecoin can be slow, so give it more time
+        // Add timeout as safety net
         setTimeout(() => {
-          reject(new Error('Blockchain registration timed out after 2 minutes'))
+          if (blockchainPromiseReject) {
+            reject(new Error('Blockchain registration timed out after 2 minutes'))
+            setBlockchainPromiseReject(null)
+            setBlockchainPromiseResolve(null)
+          }
         }, 120000) // 2 minutes
         
       } catch (error) {
