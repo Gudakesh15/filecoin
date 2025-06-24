@@ -4,6 +4,7 @@ import './App.css'
 import FileUpload from './components/FileUpload'
 import VerificationInterface from './components/VerificationInterface'
 import WalletConnection from './components/WalletConnection'
+import DocumentVault from './components/DocumentVault'
 
 function App() {
   const [activeTab, setActiveTab] = useState('upload')
@@ -48,6 +49,12 @@ function App() {
               onClick={() => setActiveTab('upload')}
             >
               📤 Upload
+            </button>
+            <button 
+              className={`nav-tab ${activeTab === 'vault' ? 'active' : ''}`}
+              onClick={() => setActiveTab('vault')}
+            >
+              📁 My Documents
             </button>
             <button 
               className={`nav-tab ${activeTab === 'verify' ? 'active' : ''}`}
@@ -127,6 +134,12 @@ function App() {
                 </div>
               )}
             </>
+          )}
+
+          {activeTab === 'vault' && (
+            <div className="vault-section">
+              <DocumentVault />
+            </div>
           )}
 
           {activeTab === 'verify' && (
