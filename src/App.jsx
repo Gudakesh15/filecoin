@@ -78,6 +78,7 @@ function App() {
                 <FileUpload 
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
+                  walletConnection={walletConnection}
                 />
               </div>
               

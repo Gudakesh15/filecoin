@@ -15,6 +15,192 @@
   padding: 20px;
 }
 
+/* Blockchain Status Section */
+.blockchain-status-section {
+  margin-bottom: 32px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid;
+}
+
+.blockchain-status-section.success {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+}
+
+.blockchain-status-section.pending {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.blockchain-status-section.error {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.blockchain-status-section.none {
+  border-color: #6b7280;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.blockchain-status-section h3 {
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.status-indicator {
+  margin-bottom: 16px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.status-badge.success {
+  background: #10b981;
+  color: white;
+}
+
+.status-badge.pending {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-badge.error {
+  background: #ef4444;
+  color: white;
+}
+
+.status-badge.none {
+  background: #6b7280;
+  color: white;
+}
+
+.transaction-details {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.transaction-item {
+  margin-bottom: 12px;
+}
+
+.tx-label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.tx-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tx-value code {
+  flex: 1;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: #1a1a1a;
+  border: 1px solid #e2e8f0;
+  word-break: break-all;
+}
+
+.transaction-actions {
+  margin-top: 12px;
+}
+
+.explorer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.explorer-link:hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.retry-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.retry-blockchain-button {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  margin-bottom: 8px;
+}
+
+.retry-blockchain-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
+}
+
+.retry-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.success-details {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.success-info p {
+  margin: 8px 0;
+  color: #065f46;
+  font-size: 14px;
+}
+
+.success-info p:first-child {
+  margin-top: 0;
+}
+
+.success-info p:last-child {
+  margin-bottom: 0;
+}
+
 .cid-display-modal {
   background: white;
   border-radius: 16px;
@@ -176,6 +362,17 @@
 .copy-button:hover, .format-copy-btn:hover {
   background: #5a67d8;
   transform: translateY(-1px);
+}
+
+.cid-note {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  color: #065f46;
+  font-style: italic;
 }
 
 /* CID Formats */
@@ -350,6 +547,15 @@
 .action-button.secondary:hover {
   background: #059669;
   transform: translateY(-1px);
+}
+
+.action-button.verify {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.action-button.verify:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
 .action-button:not(.primary):not(.secondary) {

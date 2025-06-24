@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CID } from 'multiformats/cid';
 import QRCode from 'qrcode';
 
-const CIDDisplay = ({ uploadData, onClose }) => {
+const CIDDisplay = ({ uploadData, onClose, onRetryBlockchain }) => {
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [cidFormats, setCidFormats] = useState({});
@@ -90,19 +90,132 @@ const CIDDisplay = ({ uploadData, onClose }) => {
     return `https://${gateway}/ipfs/${cid}`;
   };
 
+  const getExplorerUrl = (txHash) => {
+    return `https://calibration.filfox.info/en/message/${txHash}`;
+  };
+
+  const getBlockchainStatus = () => {
+    if (uploadData.blockchain?.confirmed) {
+      return 'success';
+    } else if (uploadData.transactionHash) {
+      return 'pending';
+    } else if (uploadData.blockchainError) {
+      return 'error';
+    }
+    return 'none';
+  };
+
+  const getBlockchainMessage = () => {
+    const status = getBlockchainStatus();
+    switch (status) {
+      case 'success':
+        return 'Document proof registered on Filecoin blockchain!';
+      case 'pending':
+        return 'Blockchain registration in progress...';
+      case 'error':
+        return `Blockchain registration failed: ${uploadData.blockchainError}`;
+      default:
+        return 'File uploaded to IPFS only (wallet not connected)';
+    }
+  };
+
+  const getStatusIcon = () => {
+    const status = getBlockchainStatus();
+    switch (status) {
+      case 'success':
+        return '🛡️';
+      case 'pending':
+        return '⏳';
+      case 'error':
+        return '⚠️';
+      default:
+        return '☁️';
+    }
+  };
+
   if (!uploadData) return null;
+
+  const blockchainStatus = getBlockchainStatus();
 
   return (
     <div className="cid-display-overlay">
       <div className="cid-display-modal">
         <div className="cid-display-header">
-          <h2>🎉 File Successfully Uploaded to IPFS!</h2>
+          <h2>
+            {getStatusIcon()} File Upload 
+            {blockchainStatus === 'success' ? ' & Blockchain Registration Complete!' : 
+             blockchainStatus === 'pending' ? ' Complete - Blockchain Registration Pending' :
+             blockchainStatus === 'error' ? ' Complete - Blockchain Registration Failed' :
+             ' Complete!'}
+          </h2>
           <button onClick={onClose} className="close-button" aria-label="Close">
             ✕
           </button>
         </div>
 
         <div className="cid-display-content">
+          {/* Blockchain Status Section */}
+          <div className={`blockchain-status-section ${blockchainStatus}`}>
+            <h3>⛓️ Blockchain Registration</h3>
+            <div className="status-indicator">
+              <span className={`status-badge ${blockchainStatus}`}>
+                {getStatusIcon()} {getBlockchainMessage()}
+              </span>
+            </div>
+
+            {uploadData.transactionHash && (
+              <div className="transaction-details">
+                <div className="transaction-item">
+                  <span className="tx-label">Transaction Hash:</span>
+                  <div className="tx-value">
+                    <code>{uploadData.transactionHash}</code>
+                    <button 
+                      onClick={() => copyToClipboard(uploadData.transactionHash)}
+                      className="copy-button"
+                      title="Copy Transaction Hash"
+                    >
+                      {copied ? '✅' : '📋'}
+                    </button>
+                  </div>
+                </div>
+                <div className="transaction-actions">
+                  <a 
+                    href={getExplorerUrl(uploadData.transactionHash)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="explorer-link"
+                  >
+                    🔍 View on Filecoin Explorer
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {blockchainStatus === 'error' && uploadData.blockchainRetryable && onRetryBlockchain && (
+              <div className="retry-section">
+                <button 
+                  onClick={onRetryBlockchain}
+                  className="retry-blockchain-button"
+                >
+                  🔄 Retry Blockchain Registration
+                </button>
+                <p className="retry-hint">
+                  The file is safely stored on IPFS. You can retry blockchain registration anytime.
+                </p>
+              </div>
+            )}
+
+            {blockchainStatus === 'success' && uploadData.blockchain && (
+              <div className="success-details">
+                <div className="success-info">
+                  <p>✅ Document proof is now permanently registered on Filecoin blockchain</p>
+                  <p>🔒 Anyone can verify this document's authenticity using the CID</p>
+                  <p>⏰ Registration timestamp: {formatDate(uploadData.blockchain.timestamp || uploadData.timestamp)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* File Information */}
           <div className="file-info-section">
             <h3>📄 File Information</h3>
@@ -142,6 +255,11 @@ const CIDDisplay = ({ uploadData, onClose }) => {
                   {copied ? '✅' : '📋'}
                 </button>
               </div>
+              {blockchainStatus === 'success' && (
+                <p className="cid-note">
+                  🛡️ This CID is now cryptographically linked to the Filecoin blockchain
+                </p>
+              )}
             </div>
 
             {/* CID Formats */}
@@ -227,6 +345,14 @@ const CIDDisplay = ({ uploadData, onClose }) => {
             >
               🔗 View File
             </button>
+            {blockchainStatus === 'success' && (
+              <button 
+                onClick={() => window.open('/verify', '_blank')}
+                className="action-button verify"
+              >
+                🔍 Verify Document
+              </button>
+            )}
             <button 
               onClick={onClose}
               className="action-button"
@@ -243,8 +369,13 @@ const CIDDisplay = ({ uploadData, onClose }) => {
                 <p><strong>Storage Provider:</strong> Pinata (IPFS + Filecoin)</p>
                 <p><strong>Content Addressing:</strong> IPFS using SHA-256 hash</p>
                 <p><strong>CID Version:</strong> {cidFormats.original?.startsWith('Qm') ? 'v0 (Base58)' : 'v1 (Base32)'}</p>
+                <p><strong>Blockchain:</strong> Filecoin Calibration Testnet</p>
+                <p><strong>Smart Contract:</strong> 0x527C50036dB179c92b87518818618041F640005F</p>
                 <p><strong>Decentralized:</strong> File is distributed across IPFS network</p>
                 <p><strong>Immutable:</strong> Content cannot be changed (new CID for changes)</p>
+                {blockchainStatus === 'success' && (
+                  <p><strong>Blockchain Proof:</strong> Document authenticity cryptographically verified</p>
+                )}
               </div>
             </details>
           </div>

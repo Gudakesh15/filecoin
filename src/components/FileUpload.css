@@ -4,11 +4,24 @@
   padding: 20px;
 }
 
-.tag-input-section {
+.file-upload-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.upload-form {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+}
+
+.tag-input-container {
   margin-bottom: 20px;
 }
 
-.tag-input-section label {
+.tag-input-container label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
@@ -58,7 +71,7 @@
   box-shadow: 0 8px 25px rgba(0, 102, 204, 0.15);
 }
 
-.dropzone.drag-active {
+.dropzone.active {
   border-color: #0066cc;
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
   transform: scale(1.02);
@@ -70,99 +83,253 @@
   cursor: default;
 }
 
-.upload-message, .drop-message, .upload-status {
-  text-align: center;
+.dropzone.error {
+  border-color: #dc2626;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
 }
 
-.upload-icon, .drop-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  display: block;
+/* Upload Progress Section */
+.upload-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
 }
 
-.upload-message p {
-  margin: 8px 0;
-  color: #4b5563;
-  font-size: 16px;
+.progress-circle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.click-text {
-  color: #0066cc;
-  font-weight: 600;
-  text-decoration: underline;
+.progress-ring {
+  transform: rotate(-90deg);
 }
 
-.file-info {
-  font-size: 14px !important;
-  color: #6b7280 !important;
-  margin-top: 12px !important;
-}
-
-.drop-message p {
-  font-size: 18px;
-  color: #0066cc;
-  font-weight: 600;
-  margin: 0;
-}
-
-.upload-status p {
-  margin: 8px 0;
-  color: #16a34a;
-  font-weight: 600;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background-color: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 16px 0;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.5s ease;
+  stroke-linecap: round;
 }
 
 .progress-text {
+  position: absolute;
+  font-size: 18px;
+  font-weight: 700;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.upload-status {
+  text-align: center;
+  width: 100%;
+}
+
+.current-step, .blockchain-step {
+  margin: 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.current-step {
+  color: #1f2937;
+}
+
+.blockchain-step {
+  color: #7c3aed;
+}
+
+.step-icon {
+  font-size: 18px;
+}
+
+.transaction-info {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 14px;
-  color: #16a34a;
+}
+
+.transaction-hash {
+  margin: 4px 0;
+  color: #64748b;
+  font-family: 'Courier New', monospace;
+}
+
+.confirmations {
+  margin: 4px 0;
+  color: #059669;
   font-weight: 600;
 }
 
-.error-message {
+.error-section {
   margin-top: 16px;
   padding: 16px;
-  background-color: #fef2f2;
+  background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 8px;
-  text-align: center;
 }
 
-.error-message p {
+.error-message {
   color: #dc2626;
   margin: 0 0 12px 0;
   font-weight: 600;
 }
 
 .retry-button {
-  background-color: #dc2626;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
 }
 
 .retry-button:hover {
-  background-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
 }
 
+.retry-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Drag and Drop States */
+.drag-active {
+  color: #0066cc;
+}
+
+.drag-active .upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.drag-active p {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #0066cc;
+}
+
+/* Upload Prompt */
+.upload-prompt {
+  text-align: center;
+  padding: 20px;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.upload-prompt h3 {
+  margin: 0 0 12px 0;
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.upload-prompt p {
+  margin: 8px 0;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.file-info {
+  font-size: 14px !important;
+  color: #94a3b8 !important;
+  margin-top: 16px !important;
+}
+
+/* Warning Messages */
+.wallet-warning {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #fef3cd;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.config-warning {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Process Flow Visualization */
+.process-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 80px;
+}
+
+.flow-icon {
+  font-size: 20px;
+}
+
+.flow-step span:last-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+}
+
+.flow-step small {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.flow-arrow {
+  font-size: 16px;
+  color: #94a3b8;
+  font-weight: bold;
+}
+
+/* Success States */
 .success-message {
   margin-top: 16px;
   padding: 16px;
@@ -178,32 +345,19 @@
   font-weight: 600;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .file-upload {
-    padding: 16px;
+/* Animations */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
   }
-  
-  .dropzone {
-    padding: 30px 16px;
-    min-height: 160px;
+  40% {
+    transform: translateY(-10px);
   }
-  
-  .upload-icon, .drop-icon {
-    font-size: 36px;
-    margin-bottom: 12px;
-  }
-  
-  .upload-message p {
-    font-size: 14px;
-  }
-  
-  .tag-input {
-    font-size: 16px; /* Prevents zoom on iOS */
+  60% {
+    transform: translateY(-5px);
   }
 }
 
-/* Animation for upload status */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -213,12 +367,93 @@
   }
 }
 
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .uploading .upload-icon {
   animation: pulse 2s ease-in-out infinite;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .file-upload-container {
+    padding: 16px;
+  }
+  
+  .upload-form {
+    padding: 20px;
+  }
+  
+  .dropzone {
+    padding: 30px 16px;
+    min-height: 160px;
+  }
+  
+  .upload-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  
+  .upload-prompt h3 {
+    font-size: 20px;
+  }
+  
+  .upload-prompt p {
+    font-size: 14px;
+  }
+  
+  .tag-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .progress-circle {
+    scale: 0.8;
+  }
+  
+  .process-flow {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .flow-arrow {
+    transform: rotate(90deg);
+  }
+  
+  .current-step, .blockchain-step {
+    font-size: 14px;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .transaction-info {
+    font-size: 12px;
+  }
 }
 
 /* Focus styles for accessibility */
 .dropzone:focus-within {
   outline: 2px solid #0066cc;
+  outline-offset: 2px;
+}
+
+.retry-button:focus {
+  outline: 2px solid #f59e0b;
   outline-offset: 2px;
 } 

@@ -81,44 +81,69 @@ export { web3Modal };
 
 // Contract addresses for ProofVault
 export const CONTRACT_ADDRESSES = {
-  PROOF_VAULT: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0', // ProofVault contract on Filecoin Calibration
+  PROOF_VAULT: '0x527C50036dB179c92b87518818618041F640005F', // ProofVault contract on Filecoin Calibration
 } as const;
 
 // ProofVault contract ABI (from our deployed contract)
 export const PROOF_VAULT_ABI = [
   {
-    "inputs": [],
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "string", "name": "cid", "type": "string"},
+      {"indexed": false, "internalType": "string", "name": "tag", "type": "string"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
     "name": "DocumentRegistered",
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "DocumentVerified", 
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "string", "name": "cid", "type": "string"},
+      {"indexed": true, "internalType": "address", "name": "verifier", "type": "address"},
+      {"indexed": false, "internalType": "string", "name": "verifierName", "type": "string"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "DocumentVerified",
     "type": "event"
   },
   {
-    "inputs": [{"name": "_cid", "type": "string"}],
+    "inputs": [
+      {"internalType": "string", "name": "cid", "type": "string"},
+      {"internalType": "string", "name": "tag", "type": "string"}
+    ],
     "name": "registerDocument",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [{"name": "_cid", "type": "string"}],
+    "inputs": [
+      {"internalType": "string", "name": "cid", "type": "string"},
+      {"internalType": "string", "name": "verifierName", "type": "string"}
+    ],
     "name": "verifyDocument",
-    "outputs": [{"name": "", "type": "bool"}],
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "string", "name": "cid", "type": "string"}],
+    "name": "getDocumentMetadata",
+    "outputs": [
+      {"internalType": "address", "name": "owner", "type": "address"},
+      {"internalType": "string", "name": "tag", "type": "string"},
+      {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+      {"internalType": "bool", "name": "exists", "type": "bool"}
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [{"name": "", "type": "string"}],
-    "name": "documents",
-    "outputs": [
-      {"name": "cid", "type": "string"},
-      {"name": "uploader", "type": "address"},
-      {"name": "timestamp", "type": "uint256"},
-      {"name": "verified", "type": "bool"}
-    ],
+    "inputs": [{"internalType": "string", "name": "cid", "type": "string"}],
+    "name": "isDocumentVerified",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
     "stateMutability": "view",
     "type": "function"
   }
