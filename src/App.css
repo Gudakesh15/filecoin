@@ -82,6 +82,11 @@ body {
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
+.wallet-section {
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
 .verification-section {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);

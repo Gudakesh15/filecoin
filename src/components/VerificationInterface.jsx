@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { CID } from 'multiformats/cid'
+import blockchainService from '../utils/blockchainService'
 import './VerificationInterface.css'
 
-const VerificationInterface = ({ contract }) => {
+const VerificationInterface = ({ walletConnection }) => {
   const [verificationMethod, setVerificationMethod] = useState('cid') // 'cid' or 'file'
   const [cidInput, setCidInput] = useState('')
   const [fileToVerify, setFileToVerify] = useState(null)
@@ -46,24 +47,43 @@ const VerificationInterface = ({ contract }) => {
 
   // Check if document is verified on-chain
   const checkOnChainVerification = async (cidString) => {
-    if (!contract) {
-      return { isVerified: false, error: 'Smart contract not available' }
+    if (!walletConnection?.isConnected) {
+      return { 
+        isVerified: false, 
+        exists: false,
+        error: 'Wallet not connected. Please connect your MetaMask wallet to check blockchain verification status.' 
+      }
     }
 
     try {
-      // Call the smart contract to check if document exists and is verified
-      const documentExists = await contract.documents(cidString)
-      const isVerified = await contract.isVerified(cidString)
+      // Get document metadata from smart contract
+      const metadata = await blockchainService.getDocumentMetadata(cidString)
+      
+      if (!metadata.exists) {
+        return { 
+          isVerified: false, 
+          exists: false,
+          error: null
+        }
+      }
+
+      // Check if document is verified
+      const isVerified = await blockchainService.isDocumentVerified(cidString)
       
       return { 
         isVerified, 
-        exists: documentExists.exists,
-        owner: documentExists.owner,
-        timestamp: documentExists.timestamp.toNumber() 
+        exists: true,
+        owner: metadata.owner,
+        tag: metadata.tag,
+        timestamp: metadata.timestamp * 1000 // Convert to milliseconds
       }
     } catch (error) {
       console.error('Error checking on-chain verification:', error)
-      return { isVerified: false, error: error.message }
+      return { 
+        isVerified: false, 
+        exists: false,
+        error: error.message || 'Failed to check blockchain verification'
+      }
     }
   }
 
