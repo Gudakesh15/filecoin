@@ -13,10 +13,9 @@ const NETWORK_CONFIG = {
   },
 }
 
-// Smart Contract Configuration
+// Smart Contract Configuration - Updated with actual deployed address
 const CONTRACT_CONFIG = {
-  // TODO: Replace with actual deployed contract address
-  address: '0x0000000000000000000000000000000000000000', // Placeholder
+  address: '0x527C50036dB179c92b87518818618041F640005F', // ProofVault contract on Filecoin Calibration
   abi: [
     // Core functions from ProofVault.sol
     'function registerDocument(string calldata cid, string calldata tag) external',
