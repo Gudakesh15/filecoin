@@ -43,10 +43,38 @@ const FileUpload = ({ onUploadSuccess, onUploadError }) => {
     setBlockchainStep(`✅ Transaction submitted: ${transactionHashData.slice(0, 10)}...`)
     setProgress(70)
 
+    // 💾 STORE TRANSACTION HASH IMMEDIATELY - Fix for Document Vault display!
+    if (uploadData?.cid) {
+      const transactionRecord = {
+        cid: uploadData.cid,
+        transactionHash: transactionHashData,
+        timestamp: Date.now(),
+        address: address,
+        tag: uploadData.tag,
+        status: 'submitted'
+      }
+      
+      // Store in localStorage for Document Vault to retrieve
+      const existingRecords = JSON.parse(localStorage.getItem('proofvault_transactions') || '[]')
+      const updatedRecords = [transactionRecord, ...existingRecords.filter(r => r.cid !== uploadData.cid)]
+      localStorage.setItem('proofvault_transactions', JSON.stringify(updatedRecords))
+      
+      console.log('💾 Stored transaction record:', transactionRecord)
+    }
+
     if (isConfirming) {
       console.log('⏳ Transaction confirming...')
       setBlockchainStep('⏳ Waiting for blockchain confirmation... (this can take 1-2 minutes)')
       setProgress(80)
+      
+      // Update status to confirming
+      if (uploadData?.cid) {
+        const existingRecords = JSON.parse(localStorage.getItem('proofvault_transactions') || '[]')
+        const updatedRecords = existingRecords.map(r => 
+          r.cid === uploadData.cid ? { ...r, status: 'confirming' } : r
+        )
+        localStorage.setItem('proofvault_transactions', JSON.stringify(updatedRecords))
+      }
     }
 
     if (isConfirmed) {
@@ -55,6 +83,15 @@ const FileUpload = ({ onUploadSuccess, onUploadError }) => {
       setTransactionStatus('confirmed')
       setBlockchainStep('🎉 Congratulations! Your contract has been registered on Filecoin!')
       setProgress(100)
+
+      // Update status to confirmed
+      if (uploadData?.cid) {
+        const existingRecords = JSON.parse(localStorage.getItem('proofvault_transactions') || '[]')
+        const updatedRecords = existingRecords.map(r => 
+          r.cid === uploadData.cid ? { ...r, status: 'confirmed' } : r
+        )
+        localStorage.setItem('proofvault_transactions', JSON.stringify(updatedRecords))
+      }
 
       // Trigger the promise resolution if we have a resolver
       if (blockchainPromiseResolve) {
@@ -73,6 +110,15 @@ const FileUpload = ({ onUploadSuccess, onUploadError }) => {
       setError(writeError.message)
       setBlockchainStep(`❌ Registration failed: ${writeError.message}`)
       
+      // Update status to failed
+      if (uploadData?.cid) {
+        const existingRecords = JSON.parse(localStorage.getItem('proofvault_transactions') || '[]')
+        const updatedRecords = existingRecords.map(r => 
+          r.cid === uploadData.cid ? { ...r, status: 'failed', error: writeError.message } : r
+        )
+        localStorage.setItem('proofvault_transactions', JSON.stringify(updatedRecords))
+      }
+      
       if (blockchainPromiseReject) {
         const error = new Error(writeError.message)
         error.isRetryable = !writeError.message.includes('User rejected') && 
@@ -81,7 +127,7 @@ const FileUpload = ({ onUploadSuccess, onUploadError }) => {
         setBlockchainPromiseReject(null) // Clear the rejector
       }
     }
-  }, [transactionHashData, isConfirming, isConfirmed, writeError, blockchainPromiseResolve, blockchainPromiseReject])
+  }, [transactionHashData, isConfirming, isConfirmed, writeError, blockchainPromiseResolve, blockchainPromiseReject, uploadData, address])
 
   // Pinata configuration
   const PINATA_JWT = import.meta.env.VITE_PINATA_JWT

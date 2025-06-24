@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAccount, useReadContract, usePublicClient } from 'wagmi'
 import { ethers } from 'ethers'
 import { CONTRACT_ADDRESSES, PROOF_VAULT_ABI } from '../config/web3'
+import VerificationRequest from './VerificationRequest'
 import './DocumentVault.css'
 
 const DocumentVault = () => {
@@ -10,6 +11,7 @@ const DocumentVault = () => {
   const [error, setError] = useState('')
   const [expandedDoc, setExpandedDoc] = useState(null)
   const [documentDetails, setDocumentDetails] = useState({})
+  const [verifyingDoc, setVerifyingDoc] = useState(null) // CID of document being verified
 
   const { address, isConnected } = useAccount()
 
@@ -126,6 +128,25 @@ const DocumentVault = () => {
     try {
       console.log('🔍 Fetching transaction details for CID:', cid)
       
+      // 💾 FIRST CHECK STORED TRANSACTION RECORDS - More reliable!
+      const storedRecords = JSON.parse(localStorage.getItem('proofvault_transactions') || '[]')
+      const storedRecord = storedRecords.find(r => r.cid === cid)
+      
+      if (storedRecord) {
+        console.log('✅ Found stored transaction record:', storedRecord)
+        return {
+          transactionHash: storedRecord.transactionHash,
+          blockNumber: 'Confirmed',
+          status: storedRecord.status,
+          timestamp: storedRecord.timestamp,
+          eventData: {
+            cid: storedRecord.cid,
+            tag: storedRecord.tag,
+            user: storedRecord.address
+          }
+        }
+      }
+      
       if (!publicClient || !address) {
         console.warn('PublicClient or address not available')
         return {
@@ -135,6 +156,9 @@ const DocumentVault = () => {
         }
       }
 
+      // 🔄 FALLBACK: Try to get from event logs (backup method)
+      console.log('🔄 No stored record found, attempting event log retrieval...')
+      
       // Try multiple approaches to get event logs
       let logs = []
       
@@ -180,7 +204,11 @@ const DocumentVault = () => {
           })
         } catch (fallbackError) {
           console.error('Both primary and fallback RPC requests failed:', fallbackError)
-          throw new Error('Blockchain network unavailable')
+          return {
+            transactionHash: 'Error loading - events unavailable',
+            blockNumber: 'Error loading',
+            eventData: null
+          }
         }
       }
       
@@ -308,6 +336,28 @@ const DocumentVault = () => {
     return `${address.slice(0, start)}...${address.slice(-end)}`
   }
 
+  // Handle verification completion
+  const handleVerificationComplete = (verificationRecord) => {
+    console.log('🎉 Verification completed:', verificationRecord)
+    
+    // Update the document verification status
+    setDocuments(prevDocs => 
+      prevDocs.map(doc => 
+        doc.cid === verificationRecord.cid 
+          ? { ...doc, isVerified: true }
+          : doc
+      )
+    )
+    
+    // Close verification modal
+    setVerifyingDoc(null)
+    
+    // Refresh document list to get latest verification status
+    setTimeout(() => {
+      fetchUserDocuments()
+    }, 2000)
+  }
+
   // Effect to fetch documents when wallet connection changes or document count updates
   useEffect(() => {
     fetchUserDocuments()
@@ -432,6 +482,16 @@ const DocumentVault = () => {
                 >
                   {expandedDoc === doc.cid ? '▲ Hide Details' : '▼ Blockchain Details'}
                 </button>
+
+                {!doc.isVerified && (
+                  <button 
+                    onClick={() => setVerifyingDoc(doc.cid)}
+                    className="action-btn verify-btn"
+                    title="Request document verification"
+                  >
+                    🔐 Request Verification
+                  </button>
+                )}
               </div>
 
               {/* Expandable Blockchain Details */}
@@ -447,15 +507,26 @@ const DocumentVault = () => {
                         <h5>📋 Transaction Information</h5>
                         <div className="detail-item">
                           <span className="detail-label">Transaction Hash:</span>
-                          <code className="detail-value">
-                            {truncateAddress(documentDetails[doc.cid].transactionHash, 10, 8)}
-                          </code>
-                          <button 
-                            onClick={() => copyToClipboard(documentDetails[doc.cid].transactionHash, 'Transaction Hash')}
-                            className="copy-btn"
-                          >
-                            📋
-                          </button>
+                          {documentDetails[doc.cid].transactionHash && 
+                           !documentDetails[doc.cid].transactionHash.includes('Error') &&
+                           !documentDetails[doc.cid].transactionHash.includes('Wallet not connected') ? (
+                            <>
+                              <code className="detail-value">
+                                {truncateAddress(documentDetails[doc.cid].transactionHash, 10, 8)}
+                              </code>
+                              <button 
+                                onClick={() => copyToClipboard(documentDetails[doc.cid].transactionHash, 'Transaction Hash')}
+                                className="copy-btn"
+                                title="Copy full transaction hash"
+                              >
+                                📋
+                              </button>
+                            </>
+                          ) : (
+                            <span className="detail-value error-text">
+                              {documentDetails[doc.cid].transactionHash || 'Not available'}
+                            </span>
+                          )}
                         </div>
                         
                         {documentDetails[doc.cid].blockNumber && 
@@ -524,6 +595,19 @@ const DocumentVault = () => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Verification Request Modal */}
+      {verifyingDoc && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <VerificationRequest
+              cid={verifyingDoc}
+              onVerificationComplete={handleVerificationComplete}
+              onClose={() => setVerifyingDoc(null)}
+            />
+          </div>
         </div>
       )}
     </div>

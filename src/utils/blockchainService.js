@@ -24,7 +24,8 @@ const CONTRACT_CONFIG = {
     'function isDocumentVerified(string calldata cid) external view returns (bool)',
     'function getUserDocumentCount(address user) external view returns (uint256)',
     'function getDocument(address user, uint256 index) external view returns (string memory)',
-    'function getVerifications(string calldata cid) external view returns (tuple(address verifier, string verifierName, uint256 timestamp)[])',
+    'function getDocumentVerifications(string calldata cid) external view returns (tuple(address verifier, string verifierName, uint256 timestamp)[])',
+    'function selfVerifyDocument(string calldata cid, string calldata verifierName) external',
     
     // Events
     'event DocumentRegistered(address indexed user, string cid, string tag, uint256 timestamp)',
@@ -395,6 +396,121 @@ class BlockchainService {
       return documents
     } catch (error) {
       console.error('Failed to get user documents:', error)
+      throw this.parseContractError(error)
+    }
+  }
+
+  // ========== DOCUMENT VERIFICATION FUNCTIONS ==========
+
+  async verifyDocument(cid, verifierName, options = {}) {
+    try {
+      if (!this.contract) {
+        throw new Error('Contract not initialized. Please connect your wallet.')
+      }
+
+      if (!cid || !verifierName) {
+        throw new Error('CID and verifier name are required')
+      }
+
+      console.log('🔐 Verifying document:', { cid, verifierName })
+
+      // Estimate gas first
+      const gasEstimate = await this.contract.estimateGas.verifyDocument(cid, verifierName)
+      const gasLimit = gasEstimate.mul(120).div(100) // Add 20% buffer
+
+      console.log('⛽ Gas estimate for verification:', gasEstimate.toString())
+
+      // Send transaction with gas limit
+      const tx = await this.contract.verifyDocument(cid, verifierName, {
+        gasLimit,
+        ...options
+      })
+
+      console.log('📤 Verification transaction sent:', tx.hash)
+
+      // Create transaction tracker
+      this.createTransactionTracker(tx.hash, {
+        type: 'VERIFY_DOCUMENT',
+        cid,
+        verifierName,
+        timestamp: Date.now()
+      })
+
+      return {
+        transactionHash: tx.hash,
+        cid,
+        verifierName,
+        gasEstimate: gasEstimate.toString()
+      }
+    } catch (error) {
+      console.error('Failed to verify document:', error)
+      throw this.parseContractError(error)
+    }
+  }
+
+  async selfVerifyDocument(cid, verifierName, options = {}) {
+    try {
+      if (!this.contract) {
+        throw new Error('Contract not initialized. Please connect your wallet.')
+      }
+
+      if (!cid || !verifierName) {
+        throw new Error('CID and verifier name are required')
+      }
+
+      console.log('🔐 Self-verifying document:', { cid, verifierName })
+
+      // Estimate gas first
+      const gasEstimate = await this.contract.estimateGas.selfVerifyDocument(cid, verifierName)
+      const gasLimit = gasEstimate.mul(120).div(100) // Add 20% buffer
+
+      console.log('⛽ Gas estimate for self-verification:', gasEstimate.toString())
+
+      // Send transaction with gas limit
+      const tx = await this.contract.selfVerifyDocument(cid, verifierName, {
+        gasLimit,
+        ...options
+      })
+
+      console.log('📤 Self-verification transaction sent:', tx.hash)
+
+      // Create transaction tracker
+      this.createTransactionTracker(tx.hash, {
+        type: 'SELF_VERIFY_DOCUMENT',
+        cid,
+        verifierName,
+        timestamp: Date.now()
+      })
+
+      return {
+        transactionHash: tx.hash,
+        cid,
+        verifierName,
+        gasEstimate: gasEstimate.toString()
+      }
+    } catch (error) {
+      console.error('Failed to self-verify document:', error)
+      throw this.parseContractError(error)
+    }
+  }
+
+  async getDocumentVerifications(cid) {
+    try {
+      if (!this.contract) {
+        throw new Error('Contract not initialized. Please connect your wallet.')
+      }
+
+      const verifications = await this.contract.getDocumentVerifications(cid)
+      
+      // Convert to readable format
+      return verifications.map(verification => ({
+        verifier: verification.verifier,
+        verifierName: verification.verifierName,
+        timestamp: verification.timestamp.toNumber() * 1000, // Convert to milliseconds
+        date: new Date(verification.timestamp.toNumber() * 1000).toISOString()
+      }))
+    } catch (error) {
+      console.error('Failed to get document verifications:', error)
       throw this.parseContractError(error)
     }
   }
